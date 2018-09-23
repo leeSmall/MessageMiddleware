@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 查找最新的schemaLocation 访问 http://www.springframework.org/schema/ -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:mvc="http://www.springframework.org/schema/mvc"
+	   xmlns:tx="http://www.springframework.org/schema/tx"
+	   xmlns:jee="http://www.springframework.org/schema/jee"
+	   xmlns:p="http://www.springframework.org/schema/p"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:task="http://www.springframework.org/schema/task"
+	   xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+	   	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/jee
+		http://www.springframework.org/schema/jee/spring-jee-4.0.xsd
+		http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		http://www.springframework.org/schema/task
+		http://www.springframework.org/schema/task/spring-task-4.0.xsd
+		http://www.springframework.org/schema/rabbit
+		http://www.springframework.org/schema/rabbit/spring-rabbit-2.0.xsd">
+     
+
+	<!-- rabbitMQ配置 -->
+	<bean id="rabbitConnectionFactory"
+        class="org.springframework.amqp.rabbit.connection.CachingConnectionFactory">
+        <constructor-arg value="127.0.0.1"/>
+        <property name="username" value="guest"/>
+        <property name="password" value="guest"/>
+        <property name="channelCacheSize" value="8"/>
+        <property name="port" value="5672"></property>
+    </bean>
+    <!--Spring的rabbitmq admin-->
+    <rabbit:admin connection-factory="rabbitConnectionFactory"/>
+
+	<!--生产者创建队列-->
+    <rabbit:queue name="p_create_queue" durable="false"/>
+
+	<!--fanout交换器-->
+    <rabbit:fanout-exchange name="fanout-exchange"
+        xmlns="http://www.springframework.org/schema/rabbit" durable="false">
+        <rabbit:bindings>
+            <rabbit:binding queue="p_create_queue"></rabbit:binding>
+        </rabbit:bindings>
+    </rabbit:fanout-exchange>
+
+	<!--topic交换器-->
+    <rabbit:topic-exchange name="topic-exchange"
+         xmlns="http://www.springframework.org/schema/rabbit" durable="false">
+    </rabbit:topic-exchange>
+	<!-- rabbitTemplate 消息模板类 -->
+
+    <!--定义Spring的RabbitMQ的连接模板  -->
+    <bean id="rabbitTemplate" class="org.springframework.amqp.rabbit.core.RabbitTemplate">
+        <constructor-arg ref="rabbitConnectionFactory"></constructor-arg>
+    </bean>
+
+</beans>  

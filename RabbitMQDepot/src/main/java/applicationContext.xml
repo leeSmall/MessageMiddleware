@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 查找最新的schemaLocation 访问 http://www.springframework.org/schema/ -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:mvc="http://www.springframework.org/schema/mvc"
+	   xmlns:tx="http://www.springframework.org/schema/tx"
+	   xmlns:jee="http://www.springframework.org/schema/jee"
+	   xmlns:p="http://www.springframework.org/schema/p"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:task="http://www.springframework.org/schema/task"
+	   xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+    http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-4.0.xsd
+    http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+    http://www.springframework.org/schema/tx  http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+    http://www.springframework.org/schema/aop  http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+    http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd
+    http://www.springframework.org/schema/rabbit http://www.springframework.org/schema/rabbit/spring-rabbit-2.0.xsd">
+
+     <!-- 配置扫描路径 -->
+     <context:component-scan base-package="com.study.demo">
+     	<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+     </context:component-scan>
+
+	<!-- rabbitMQ配置 -->
+	<bean id="rabbitConnectionFactory"
+		  class="org.springframework.amqp.rabbit.connection.CachingConnectionFactory">
+		<constructor-arg value="127.0.0.1"/>
+		<property name="username" value="guest"/>
+		<property name="password" value="guest"/>
+		<property name="channelCacheSize" value="8"/>
+		<property name="port" value="5672"></property>
+	</bean>
+	<rabbit:admin connection-factory="rabbitConnectionFactory"/>
+
+	<!--配置队列  -->
+    <rabbit:queue name="depot_queue" durable="true"/>
+
+    <!--队列和交换器绑定  -->
+	<rabbit:direct-exchange name="depot-amount-exchange"
+          xmlns="http://www.springframework.org/schema/rabbit" durable="true">
+        <rabbit:bindings>
+            <rabbit:binding queue="depot_queue" key="amount.depot" ></rabbit:binding>
+        </rabbit:bindings>
+	</rabbit:direct-exchange>
+
+	<!-- 对消息要手动确认 -->
+    <rabbit:listener-container connection-factory="rabbitConnectionFactory"
+							   acknowledge="manual">
+        <rabbit:listener queues="depot_queue" ref="processDepot"
+                         method="onMessage" />
+    </rabbit:listener-container>
+
+</beans>  
